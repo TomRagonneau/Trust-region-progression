@@ -50,6 +50,8 @@ Z = objective(X,Y);
 % Note that its coordinates can be obtained by [X(xysol); Y(xysol)]. The
 % index correspondst to the absolute index of the matrices, columnwise.
 [~,xysol] = min(Z,[],'all','linear');
+Zmin = min(Z,[],'all');
+Zmax = max(Z,[],'all');
 
 % Generate the initial figure, that represents the objective function and
 % its minimum. The legend contains only the information related to the
@@ -57,7 +59,7 @@ Z = objective(X,Y);
 contour(X,Y,Z,40,'Linewidth',2);
 colorbar('FontSize',fontsize,'TickLabelInterpreter','latex');
 colormap pink;
-caxis([min(Z,[],'all'),max(Z,[],'all')]);
+caxis([Zmin,Zmax]);
 axis equal;
 hold on;
 scatter(X(xysol),Y(xysol),250,'k','h','MarkerFaceColor',colors(7,:),'LineWidth',1.5);
@@ -68,20 +70,29 @@ legend({'Objective function'},'Location','northeast','FontSize',fontsize,'Interp
 set(gca,'Xticklabel',get(gca,'Xticklabel'),'FontSize',fontsize,'TickLabelInterpreter','latex');
 exportgraphics(gcf,sprintf('%s/%s1.png',saving,fname),'Resolution',dpi);
 
+% Start the trust-region iterations. The values of the model are computed
+% only if the best point so far has been calculated at the previous
+% iteration. The variables Zm and Zt will be initialized with the values of
+% the model during the first iteration.
+xyplus = xyopt;
+Zm = [];
+Zt = [];
 for k = 1:kmax
     % Compute the Taylor expansion of the objective function around the
     % best point so far. The value of the objective function is set to NaN
     % in the trust region not to be drawn.
-    Zm = model(X,Y,xopt,yopt);
-    Zt = Z(:,:);
-    Zmb = Zm(:,:);
-    Zt((X-xopt).^2+(Y-yopt).^2 <= radius^2) = NaN;
-    Zmb((X-xopt).^2+(Y-yopt).^2 > radius^2) = NaN;
-    
-    % Compute the index of the minimum reached by the model. Note that the
-    % variable Zmb contains NaN at each point outside of the trust region,
-    % so that the minimum is computed in the trust-region ball.
-    [~,xyplus] = min(Zmb,[],'all','linear');
+    if xyplus == xyopt
+        Zm = model(X,Y,xopt,yopt);
+        Zt = Z(:,:);
+        Zmb = Zm(:,:);
+        Zt((X-xopt).^2+(Y-yopt).^2 <= radius^2) = NaN;
+        Zmb((X-xopt).^2+(Y-yopt).^2 > radius^2) = NaN;
+
+        % Compute the index of the minimum reached by the model. Note that
+        % the variable Zmb contains NaN at each point outside of the trust
+        % region, so that the minimum is computed in the trust-region ball.
+        [~,xyplus] = min(Zmb,[],'all','linear');
+    end
     
     % Generate the figure that represents the current trust-region
     % subproblem, without indicating the minimum reached by the model. The
@@ -90,7 +101,7 @@ for k = 1:kmax
     contour(X,Y,Zt,40,'Linewidth',2);
     colorbar('FontSize',fontsize,'TickLabelInterpreter','latex');
     colormap pink;
-    caxis([min(Z,[],'all'),max(Z,[],'all')]);
+    caxis([Zmin,Zmax]);
     axis equal;
     hold on;
     contour(X,Y,Zm,40,'--','Linewidth',2);
@@ -117,18 +128,18 @@ for k = 1:kmax
     % Compute the trust-region updates. If the computed ratio is NaN, it
     % means that two consecutive values of the model were (almost) equal,
     % the ratio is therefore set to zero to reduce the trust-region radius.
+    if radius <= radiusmin
+        % The final trust-region radius has been reached, the progression
+        % should stop.
+        break;
+    end
     ratio = (Z(xyopt)-Z(xyplus))/(Zm(xyopt)-Zm(xyplus));
     if isnan(ratio)
         ratio = 0;
     end
     fprintf('Iteration no %-2.0f: RADIUS = %.4f, RATIO = %.4f\n',k,radius,ratio)
     if ratio < 1/4
-        radius = radius/3;
-        if radius <= radiusmin
-            % The final trust-region radius has been reached, the
-            % progression should stop.
-            break;
-        end
+        radius = max(radiusmin,radius/3);
     elseif (ratio > 3/4) && ((X(xyopt)-X(xyplus))^2+(Y(xyopt)-Y(xyplus))^2 >= radius^2-2*step)
         % This condition is reached when a substancial true decrease has
         % been observed in the objective function and the computed trial
