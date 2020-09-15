@@ -95,9 +95,8 @@ for k = 1:kmax
     end
     
     % Generate the figure that represents the current trust-region
-    % subproblem, without indicating the minimum reached by the model. The
-    % legend contains only the information related to the both isopleth
-    % graphs.
+    % subproblem, without indicating the minimum reached by the model.
+    lgd = {'Objective function','Quadratic model','Solution~$\underline{x}^{\ast}$','Iterate~$\underline{x}_k$'};
     contour(X,Y,Zt,40,'Linewidth',2);
     colorbar('FontSize',fontsize,'TickLabelInterpreter','latex');
     colormap pink;
@@ -110,18 +109,18 @@ for k = 1:kmax
     rectangle('Position',[xopt-radius,yopt-radius,2*radius,2*radius],'Curvature',[1,1],'LineWidth',3);
     xlim([xmin,xmax]);
     ylim([ymin,ymax]);
-    legend({'Objective function','Quadratic model'},'Location','northeast','FontSize',fontsize,'Interpreter','latex');
+    legend(lgd,'Location','northeast','FontSize',fontsize,'Interpreter','latex');
     set(gca,'Xticklabel',get(gca,'Xticklabel'),'FontSize',fontsize,'TickLabelInterpreter','latex');
     exportgraphics(gcf,sprintf('%s/%s%.0f.png',saving,fname,2*k),'Resolution',dpi);
     
     % Generate the figure that represents the current trust-region
     % subproblem and indicate the minimum reached by the model. The legend
     % contains only the information related to the both isopleth graphs.
-    % The legend is specified again so that the newly added point is not
-    % inserted as a new data.
+    % The legend is updated to insert the new point.
+    lgd{end+1} = 'Trial point~$\underline{x}_k + \underline{d}_k$ with~$\|\underline{d}_k\|_2 \leq \Delta_k$';
     scatter(X(xyplus),Y(xyplus),250,'k','h','MarkerFaceColor',colors(2,:),'LineWidth',1.5);
     hold off;
-    legend({'Objective function','Quadratic model'},'Location','northeast','FontSize',fontsize,'Interpreter','latex');
+    legend(lgd,'Location','northeast','FontSize',fontsize,'Interpreter','latex');
     set(gca,'Xticklabel',get(gca,'Xticklabel'),'FontSize',fontsize,'TickLabelInterpreter','latex');
     exportgraphics(gcf,sprintf('%s/%s%.0f.png',saving,fname,2*k+1),'Resolution',dpi);
     
