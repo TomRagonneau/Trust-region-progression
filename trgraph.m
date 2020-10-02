@@ -22,9 +22,11 @@ ymax = 3;  % maximal value of the second coordinate
 kmax = 15;  % maximal number of outer-loop iteration
 
 dpi = 200;  % desired resolution of the images (in dots per inch)
-fontsize = 15;  % font size of the legends, axis labels and colorbar labels
+fontsize = 20;  % font size of the legends, axis labels and colorbar labels
 step = .01;  % step of the mesh of computation
+theta = 0:step:2*pi;  % Coordinates of the circle
 colors = get(gca,'colororder');  % default MATLAB colors
+allpink = pink;  % pink monochrome's array
 
 % The figures are saved in the folder `saving`, and will be saved as
 % <saving>/<fname><no>.png.
@@ -57,16 +59,17 @@ Zmax = max(Z,[],'all');
 % its minimum. The legend contains only the information related to the
 % isopleth graph.
 contour(X,Y,Z,40,'Linewidth',2);
+hold on;
+hcontobj = plot(NaN,'Color',allpink(80,:),'LineWidth',1.5);
 colorbar('FontSize',fontsize,'TickLabelInterpreter','latex');
 colormap pink;
 caxis([Zmin,Zmax]);
 axis equal;
-hold on;
 scatter(X(xysol),Y(xysol),250,'k','h','MarkerFaceColor',colors(7,:),'LineWidth',1.5);
 xlim([xmin,xmax]);
 ylim([ymin,ymax]);
 hold off;
-legend({'Objective function'},'Location','northeast','FontSize',fontsize,'Interpreter','latex');
+legend(hcontobj,{'Objective function'},'Location','northeast','FontSize',fontsize,'Interpreter','latex');
 set(gca,'Xticklabel',get(gca,'Xticklabel'),'FontSize',fontsize,'TickLabelInterpreter','latex');
 exportgraphics(gcf,sprintf('%s/%s1.png',saving,fname),'Resolution',dpi);
 
@@ -96,20 +99,22 @@ for k = 1:kmax
     
     % Generate the figure that represents the current trust-region
     % subproblem, without indicating the minimum reached by the model.
-    lgd = {'Objective function','Quadratic model','Solution~$\underline{x}^{\ast}$','Iterate~$\underline{x}_k$'};
+    lgd = {'Objective function','Quadratic model','Solution~$x^{\ast}$','Iterate~$x_k$','Trust-region~$\mathcal{B}(x_k,\Delta_k)$'};
     contour(X,Y,Zt,40,'Linewidth',2);
+    hold on;
+    hcontobj = plot(NaN,'Color',allpink(80,:),'LineWidth',1.5);
     colorbar('FontSize',fontsize,'TickLabelInterpreter','latex');
     colormap pink;
     caxis([Zmin,Zmax]);
     axis equal;
-    hold on;
     contour(X,Y,Zm,40,'--','Linewidth',2);
-    scatter(X(xysol),Y(xysol),250,'k','h','MarkerFaceColor',colors(7,:),'LineWidth',1.5);
-    scatter(xopt,yopt,150,'k','o','MarkerFaceColor',colors(5,:),'LineWidth',1.5);
-    rectangle('Position',[xopt-radius,yopt-radius,2*radius,2*radius],'Curvature',[1,1],'LineWidth',3);
+    hcontm = plot(NaN,'--','Color',allpink(80,:),'LineWidth',1.5);
+    hsol = plot(X(xysol),Y(xysol),'h','MarkerSize',15,'MarkerFaceColor',colors(7,:),'MarkerEdgeColor','black','LineWidth',1.5);
+    hcent = plot(xopt,yopt,'o','MarkerSize',10,'MarkerFaceColor',colors(5,:),'MarkerEdgeColor','black','LineWidth',1.5);
+    hreg = plot(radius*cos(theta)+xopt,radius*sin(theta)+yopt,'Color',colors(5,:),'LineWidth',1.5);
     xlim([xmin,xmax]);
     ylim([ymin,ymax]);
-    legend(lgd,'Location','northeast','FontSize',fontsize,'Interpreter','latex');
+    legend([hcontobj,hcontm,hsol,hcent,hreg],lgd,'Location','northeast','FontSize',fontsize,'Interpreter','latex');
     set(gca,'Xticklabel',get(gca,'Xticklabel'),'FontSize',fontsize,'TickLabelInterpreter','latex');
     exportgraphics(gcf,sprintf('%s/%s%.0f.png',saving,fname,2*k),'Resolution',dpi);
     
@@ -117,10 +122,10 @@ for k = 1:kmax
     % subproblem and indicate the minimum reached by the model. The legend
     % contains only the information related to the both isopleth graphs.
     % The legend is updated to insert the new point.
-    lgd{end+1} = 'Trial point~$\underline{x}_k + \underline{d}_k$ with~$\|\underline{d}_k\|_2 \leq \Delta_k$';
-    scatter(X(xyplus),Y(xyplus),250,'k','h','MarkerFaceColor',colors(2,:),'LineWidth',1.5);
+    lgd{end+1} = 'Trial point~$x_k + d_k$ with~$\|d_k\|_2 \leq \Delta_k$';
+    htrial = plot(X(xyplus),Y(xyplus),'h','MarkerSize',15,'MarkerFaceColor',colors(4,:),'MarkerEdgeColor','black','LineWidth',1.5);
     hold off;
-    legend(lgd,'Location','northeast','FontSize',fontsize,'Interpreter','latex');
+    legend([hcontobj,hcontm,hsol,hcent,hreg,htrial],lgd,'Location','northeast','FontSize',fontsize,'Interpreter','latex');
     set(gca,'Xticklabel',get(gca,'Xticklabel'),'FontSize',fontsize,'TickLabelInterpreter','latex');
     exportgraphics(gcf,sprintf('%s/%s%.0f.png',saving,fname,2*k+1),'Resolution',dpi);
     
