@@ -33,3 +33,5 @@ octave-workspace
 # Generated images
 *.png
 
+# OSX file format
+.DS_Store
