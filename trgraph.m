@@ -19,7 +19,7 @@ xmin = -4.5;  % minimal value of the first coordinate
 xmax = 4.5;  % maximal value of the first coordinate
 ymin = -3;  % minimal value of the second coordinate
 ymax = 3;  % maximal value of the second coordinate
-kmax = 1;  % maximal number of outer-loop iteration
+kmax = 15;  % maximal number of outer-loop iteration
 
 dpi = 200;  % desired resolution of the images (in dots per inch)
 fontsize = 20;  % font size of the legends, axis labels and colorbar labels
